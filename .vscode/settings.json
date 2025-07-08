@@ -1,0 +1,37 @@
+{
+    "editor.formatOnSave": true,
+    "clang-format.executable": "/usr/local/bin/clang-format",
+    "[cpp]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "files.associations": {
+        "*.h": "cpp",
+        "*.lock": "toml",
+        "*.hdl": "verilog",
+        "*.tst": "verilog",
+        "*.cmp": "verilog",
+        ".clang-format": "yaml",
+        ".clang-tidy": "yaml",
+        "*.in": "cmake",
+        "*.cpp2": "css",
+        "__config": "cpp",
+        "string": "cpp",
+        "__verbose_abort": "cpp",
+        "cmath": "cpp",
+        "cstdint": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "cwchar": "cpp",
+        "cwctype": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "stdexcept": "cpp",
+        "string_view": "cpp",
+        "typeinfo": "cpp",
+        "cstddef": "cpp",
+        "algorithm": "cpp"
+    },
+}
