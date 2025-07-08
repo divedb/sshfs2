@@ -105,3 +105,15 @@ sudo umount -f -t 5000 /Users/zlh/Desktop/alifuse  # 5秒超时
 2. 
 ➜  Desktop ls alifuse
 ls: alifuse: Device not configured
+
+Q3. 为什么在目录下ls不行。➜  hissh ls
+➜  hissh ls
+➜  hissh cd ..
+➜  Desktop ls hissh
+Desktop  Documents  Downloads  Music  Pictures  Public  snap  Templates  Videos
+➜  Desktop ls hissh/Desktop
+a.txt
+➜  Desktop 
+
+Q4. ➜  Desktop ls hissh
+ls: cannot access 'hissh': Transport endpoint is not connected

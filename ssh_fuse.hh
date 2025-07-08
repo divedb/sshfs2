@@ -12,16 +12,23 @@ class SSHFuseOp {
   explicit SSHFuseOp(std::unique_ptr<Session> session,
                      const std::string& filename = "log.txt");
 
-  void BindOperations(struct fuse_operations& ops) { ops.readdir = ReadDir; }
+  void BindOperations(struct fuse_operations& ops) {
+    ops.readdir = &SSHFuseOp::ReadDir;
+    ops.getattr = &SSHFuseOp::GetAttr;
+    ops.open = &SSHFuseOp::Open;
+    ops.opendir = &SSHFuseOp::OpenDir;
+    ops.releasedir = &SSHFuseOp::ReleaseDir;
+  }
 
  private:
   static SSHFuseOp* Instance() {
     return static_cast<SSHFuseOp*>(fuse_get_context()->private_data);
   }
 
-  static void Open(const char* path, int flags) {
+  static int Open(const char* path, struct fuse_file_info* fi) {
     auto inst = Instance();
-    inst->DoOpen(path, flags);
+
+    return inst->OpenImpl(path, fi);
   }
 
   /** Read directory
@@ -58,15 +65,66 @@ class SSHFuseOp {
   /// \param flags Flags indicating read options.
   /// \return 0 on success, or a negative errno value on error.
   static int ReadDir(const char* path, void* buf, fuse_fill_dir_t filler,
-                     off_t offset, struct fuse_file_info* fi) {
+                     off_t offset, struct fuse_file_info* fi,
+                     enum fuse_readdir_flags flag) {
+    std::ofstream ofs("a.txt");
+    ofs << "ReadDir is called\n";
+
     auto inst = Instance();
-    return inst->ReadDirImpl(path, buf, filler, offset, fi);
+
+    ofs << "inst: " << inst << std::endl;
+    ofs.flush();
+    ofs.close();
+
+    return inst->ReadDirImpl(path, buf, filler, offset, fi, flag);
   }
 
-  void DoOpen(const char* path, int flags) {}
+  static int GetAttr(const char* path, struct stat* st,
+                     struct fuse_file_info* fi) {
+    auto inst = Instance();
+
+    return inst->GetAttrImpl(path, st, fi);
+  }
+
+  int OpenImpl(const char* path, struct fuse_file_info* fi);
 
   int ReadDirImpl(const char* path, void* buf, fuse_fill_dir_t filler,
-                  off_t offset, struct fuse_file_info* fi);
+                  off_t offset, struct fuse_file_info* fi,
+                  enum fuse_readdir_flags flag);
+
+  int GetAttrImpl(const char* path, struct stat* st, struct fuse_file_info* fi);
+
+  static int OpenDir(const char* path, struct fuse_file_info* fi) {
+    std::ofstream ofs("a.txt", std::ios::app);
+    ofs << "OpenDir called for: " << path << "\n";
+    ofs.close();
+
+    auto inst = Instance();
+    return inst->OpenDirImpl(path, fi);
+  }
+
+  static int ReleaseDir(const char* path, struct fuse_file_info* fi) {
+    std::ofstream ofs("a.txt", std::ios::app);
+    ofs << "ReleaseDir called for: " << path << "\n";
+    ofs.close();
+
+    auto inst = Instance();
+    return inst->ReleaseDirImpl(path, fi);
+  }
+
+  int OpenDirImpl(const char* path, struct fuse_file_info* fi) {
+    // 实现目录打开逻辑
+    // 可以在此处初始化目录相关的资源
+    // 如果需要保存状态，可以存储在 fi->fh 中
+    fi->fh = 0;  // 示例：不使用文件句柄
+    return 0;    // 总是返回成功
+  }
+
+  int ReleaseDirImpl(const char* path, struct fuse_file_info* fi) {
+    // 实现目录释放逻辑
+    // 清理 OpenDirImpl 中分配的任何资源
+    return 0;  // 总是返回成功
+  }
 
   std::unique_ptr<Session> session_;
   std::ofstream ofs_;

@@ -22,6 +22,8 @@ class SFTP {
 
   int ReadDir(const char* path, std::vector<sftp_attributes>& dentry_attrs);
 
+  sftp_session GetSession() const { return sftp_; }
+
  private:
   Session& owner_;
   sftp_session sftp_ = nullptr;

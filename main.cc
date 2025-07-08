@@ -6,7 +6,7 @@
 using namespace sshfs2;
 
 int main(int argc, char** argv) {
-  SSHOption opt = {.host = "172.16.83.102", .user = "gc"};
+  SSHOption opt = {.host = "172.16.83.53", .user = "gc"};
   auto session = std::make_unique<Session>(opt);
 
   if (!session->IsValid()) {
@@ -34,8 +34,8 @@ int main(int argc, char** argv) {
   }
 
   SSHFuseOp ssh_fuse(std::move(session));
-  struct fuse_operations fuse_op;
-  ssh_fuse.BindOperations(fuse_op);
+  struct fuse_operations ops = {};
+  ssh_fuse.BindOperations(ops);
 
-  return fuse_main(argc, argv, &fuse_op, nullptr);
+  return fuse_main(argc, argv, &ops, &ssh_fuse);
 }
