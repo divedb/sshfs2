@@ -24,3 +24,84 @@ sudo umount /Users/zlh/Desktop/alifuse
 此时运行 sudo umount，umount 进程本身也会继承这个工作目录（因为 sudo 默认保留环境变量和当前目录）。
 
 因此，挂载点被 Shell 和 umount 自身同时占用，系统检测到冲突，返回 Resource busy。# sshfs2
+
+
+FAQ
+1. 强制卸载失败
+➜  ~ sudo umount -f /Users/zlh/Desktop/alifuse
+Password:
+umount: pthread_cond_timeout failed; continuing with unmount: Operation timed out
+umount: unmount(/Users/zlh/Desktop/alifuse): Resource busy
+
+强制卸载（umount -f）仍然失败，并导致终端卡住，通常是由于以下原因：
+
+1. 仍有进程占用文件系统
+即使强制卸载，如果 有进程仍在访问挂载点，系统会拒绝卸载。
+解决方法：
+
+bash
+# 查看哪些进程正在使用挂载点
+lsof +D /Users/zlh/Desktop/alifuse
+
+# 强制终止相关进程
+kill -9 <PID>
+如果 lsof 也卡住，说明某个进程已死锁，需重启系统。
+
+2. FUSE 文件系统自身崩溃
+如果 FUSE 守护进程（如 sshfs）异常退出，可能导致内核状态不一致，使卸载操作无限挂起。
+解决方法：
+
+bash
+# 找到并杀死残留的 FUSE 进程
+pgrep -lf sshfs  # 或 macFUSE
+kill -9 <PID>
+
+# 再次尝试卸载
+sudo umount -l /Users/zlh/Desktop/alifuse
+3. macOS 的 macFUSE 特殊行为
+在 macOS 上，macFUSE 的卸载机制可能与 Linux 不同：
+
+diskutil 比 umount 更可靠：
+
+bash
+diskutil unmount force /Users/zlh/Desktop/alifuse
+如果仍失败，需重启 macFUSE 内核扩展：
+
+bash
+sudo kextunload -b com.github.macfuse.filesystems.macfuse
+sudo kextload /Library/Filesystems/macfuse.fs/Contents/Extensions/macfuse.kext
+4. 内核级文件系统锁
+极端情况下，内核可能因死锁无法响应卸载请求。
+终极解决方案：
+
+重启计算机（唯一能清除内核状态的方法）。
+
+如果频繁发生，检查 FUSE 版本或改用更稳定的实现（如 sshfs 的替代品）。
+
+5. 终端卡住的应对措施
+如果 umount -f 卡住终端：
+
+尝试用另一个终端执行上述命令。
+
+如果所有终端无响应：
+
+macOS/Linux：按 Ctrl+C 多次，或关闭终端窗口。
+
+如果仍无效，只能强制重启。
+
+预防措施
+避免直接强制卸载，优先用懒卸载：
+
+bash
+sudo umount -l /Users/zlh/Desktop/alifuse
+确保无程序访问挂载点，再卸载。
+
+对于开发中的 FUSE 文件系统，增加超时机制：
+
+bash
+sudo umount -f -t 5000 /Users/zlh/Desktop/alifuse  # 5秒超时
+
+
+2. 
+➜  Desktop ls alifuse
+ls: alifuse: Device not configured

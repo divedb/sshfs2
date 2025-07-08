@@ -1,12 +1,16 @@
 #pragma once
 
+#include <fstream>
+#include <string>
+
 #include "session.hh"
 
 namespace sshfs2 {
 
 class SSHFuseOp {
  public:
-  explicit SSHFuseOp(std::unique_ptr<Session> session);
+  explicit SSHFuseOp(std::unique_ptr<Session> session,
+                     const std::string& filename = "log.txt");
 
   void BindOperations(struct fuse_operations& ops) { ops.readdir = ReadDir; }
 
@@ -65,6 +69,7 @@ class SSHFuseOp {
                   off_t offset, struct fuse_file_info* fi);
 
   std::unique_ptr<Session> session_;
+  std::ofstream ofs_;
 };
 
 }  // namespace sshfs2

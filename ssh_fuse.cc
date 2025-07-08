@@ -1,16 +1,27 @@
 #include "ssh_fuse.hh"
 
+#include <iostream>
+
 #include "sftp.hh"
 
 namespace sshfs2 {
 
-SSHFuseOp::SSHFuseOp(std::unique_ptr<Session> session)
-    : session_(std::move(session)) {}
+SSHFuseOp::SSHFuseOp(std::unique_ptr<Session> session,
+                     const std::string& filename)
+    : session_(std::move(session)) {
+  ofs_ = std::ofstream{filename, std::ios_base::out};
+
+  if (!ofs_.is_open()) {
+    throw std::exception();
+  }
+}
 
 int SSHFuseOp::ReadDirImpl(const char* path, void* buf, fuse_fill_dir_t filler,
                            off_t offset, struct fuse_file_info* fi) {
   UNUSED(offset);
   UNUSED(fi);
+
+  ofs_ << "ReadDirImpl called for path: " << path;
 
   auto sftp = session_->GetSFTP();
 
@@ -21,7 +32,11 @@ int SSHFuseOp::ReadDirImpl(const char* path, void* buf, fuse_fill_dir_t filler,
     return ret;
   }
 
+  if (filler(buf, ".", NULL, 0)) return 0;
+  if (filler(buf, "..", NULL, 0)) return 0;
+
   for (auto& attr : dentry_attrs) {
+    std::cout << "attr name: " << attr->name << std::endl;
     filler(buf, attr->name, NULL, 0);
   }
 
